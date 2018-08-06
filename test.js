@@ -25,9 +25,13 @@ function processResponse(err, response) {
     return;
   }
   
-  //processing inttents
+	 //processing intents
 	  if(response.intents.length>0)
-		  console.log("#" + response.intents[0].intent);
+		console.log("#" + response.intents[0].intent);
+	  
+	  //processing entities
+	  if(response.entities.length>0)
+		  console.log("@"+response.entities[0].entity);
 	  
 	  // Display the output from dialog, if any.
 	  if (response.output.text.length != 0) {
@@ -43,6 +47,5 @@ function processResponse(err, response) {
 	  //prompt user for new message
 	  var newMessageFromUser = prompt('>> ');
 	  service.message({ workspace_id: workspace_id, input: { text: newMessageFromUser },context:response.context,}, processResponse)
-
   }
 }
