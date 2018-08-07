@@ -3,7 +3,8 @@
 
 var prompt = require('prompt-sync')();
 var AssistantV1 = require('watson-developer-cloud/assistant/v1');
-
+var papa = require('PapaParse/papaparse.js');
+var fs = require('fs');
 // Set up Assistant service wrapper.
 var service = new AssistantV1({
   username: 'd3a44bff-a1ed-43e2-82fd-b1cb49840b20', // replace with service username
@@ -13,17 +14,20 @@ var service = new AssistantV1({
 
 var workspace_id = '5c7a0384-503c-4fe9-8707-0e60b3f98478'; // replace with workspace ID
 
+var file = fs.readFileSync(__dirname+'/hackathon+data+set.csv','utf8');
+var csv = papa.parse(file, {header:true,delimiter:",",});
+//console.log(csv);
 // Start conversation with empty message.
 service.message({
   workspace_id: workspace_id
   }, processResponse);
-
 // Process the service response.
 function processResponse(err, response) {
   if (err) {
     console.error(err); // something went wrong
     return;
   }
+  		//csv = papa.parse(file,{header:true});
   
   		var intent='irrelevant',state=[],district=[],field=[],area='state',type='Total';
 
@@ -35,6 +39,8 @@ function processResponse(err, response) {
   			intent=response.intents[0].intent;
   			console.log("#" + response.intents[0].intent);
   		}
+  		else
+  			console.log("#" + intent);
   		if(response.entities.length>0)
   		{
   			for(var i=0;i<response.entities.length;i++)
@@ -42,20 +48,20 @@ function processResponse(err, response) {
   				//printing all the entities
   				console.log("@"+response.entities[i].entity+':'+response.entities[i].value);	  
 
-  				if(response.entities[i]=='STATE')
+  				if(response.entities[i].entity=='STATE')
   					state.push(response.entities[i].value);
-  				else if(response.entities[i]=='DISTRICT')
+  				else if(response.entities[i].entity=='DISTRICT')
   					district.push(response.entities[i].value);
-  				else if(response.entities[i]=='FIELD')
+  				else if(response.entities[i].entity=='FIELD')
   					field.push(response.entities[i].value);
-  				else if(response.entities[i]=='area')
+  				else if(response.entities[i].entity=='area')
   					area = response.entities[i].value;
   				else
   					type = response.entities[i].value; 				
   			}
-  		}
-  		console.log('\noutput message : ');
+  		} 		
 
+  		var output = '';
   		//constructing the dialogue
   		switch(intent)
   		{
@@ -64,15 +70,24 @@ function processResponse(err, response) {
   				break;
   			};
   			case 'show':
-  			case 'avg':
-  			case 'irrelevant':{
+  			case 'average':
+  			case 'irrelevant':{  				 				
   				if(district.length>0)
   				{
-  					//print field value in district.type
+  					//print field value in district.type 
+  					
+  					for(var i=0;i<csv.data.length;++i)
+  						if(csv.data[i]['District']==district[0] && csv.data[i]['Tier']==type)
+  							output = type + ' ' + field[0] + ' in ' + district[0] + ' : ' + csv.data[i][field[0]];
   				}
   				else if(state.length>0)
   				{
   					//print sum of all district.type fvalues of that state 
+  					var sum=0.0;
+  					for(var i=0;i<csv.data.length;++i)  					
+  						if(csv.data[i]['State']==state[0] && csv.data[i]['Tier']==type)
+  							sum+=parseFloat(csv.data[i][field[0]]);
+  					output = 'Total '+type+' '+field[0]+' in '+state[0]+' : '+sum; 					
   				}
   				else
   				{
@@ -80,7 +95,7 @@ function processResponse(err, response) {
   				}
   				break;
   			};
-  			case 'sum':{
+  			case 'total':{
   				if(district.length>0)
   				{
   					//print fvalue of district.type
@@ -95,7 +110,7 @@ function processResponse(err, response) {
   				}
   				break;
   			};
-  			case 'max':{
+  			case 'maximum':{
   				if(area=='district'&&state.length>0)
   				{
   					//highest fvalue among all ditricts.type of that state
@@ -110,7 +125,7 @@ function processResponse(err, response) {
   				}
   				break;
   			};
-  			case 'min':{
+  			case 'minimum':{
   				if(area=='district'&&state.length>0)
   				{
   					//lowest fvalue among all ditricts.type of that state
@@ -171,10 +186,11 @@ function processResponse(err, response) {
   				console.log(response.output.text[0]); 
   				break;
   			};
-  			case 'bye':break;
-	 
+  			case 'bye':break; 
 	  
 	  }
+	 console.log('\noutput message : ');
+	 console.log(output);
 	  
   if(response.intents.length>0&&response.intents[0].intent=="bye")
   {
