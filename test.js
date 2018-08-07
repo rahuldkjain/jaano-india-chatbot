@@ -26,13 +26,22 @@ function processResponse(err, response) {
   }
   
   		var intent='irrelevant',state=[],district=[],field=[],area='state',type='Total';
+
+  		//printing the json response
+  		console.log('JSON response : ');
   		//populating the above variables
   		if(response.intents.length>0)
+  		{
   			intent=response.intents[0].intent;
+  			console.log("#" + response.intents[0].intent);
+  		}
   		if(response.entities.length>0)
   		{
   			for(var i=0;i<response.entities.length;i++)
   			{
+  				//printing all the entities
+  				console.log("@"+response.entities[i].entity+':'+response.entities[i].value);	  
+
   				if(response.entities[i]=='STATE')
   					state.push(response.entities[i].value);
   				else if(response.entities[i]=='DISTRICT')
@@ -45,6 +54,7 @@ function processResponse(err, response) {
   					type = response.entities[i].value; 				
   			}
   		}
+  		console.log('\noutput message : ');
 
   		//constructing the dialogue
   		switch(intent)
@@ -158,21 +168,12 @@ function processResponse(err, response) {
   				break;
   			};
   			case 'capability':{
-  				console.log(response.output.text[0]);
+  				console.log(response.output.text[0]); 
+  				break;
   			};
-  			case 'bye':
-  		}
-	 //processing intents
-	  if(response.intents.length>0)
-		console.log("#" + response.intents[0].intent);
+  			case 'bye':break;
+	 
 	  
-	  //processing entities
-	  if(response.entities.length>0)
-		  console.log("@"+response.entities[0].entity);
-	  
-	  // Display the output from dialog, if any.
-	  if (response.output.text.length != 0) {
-		  console.log(response.output.text[0]);
 	  }
 	  
   if(response.intents.length>0&&response.intents[0].intent=="bye")
